@@ -15,6 +15,9 @@ Postoffice::Postoffice() {
 }
 
 void Postoffice::InitEnvironment() {
+  /**
+   * 每个节点都有一个Postoffice单例，知道关于num_workers_ 和num_servers_的信息
+  */
   const char* val = NULL;
   val = CHECK_NOTNULL(Environment::Get()->find("DMLC_NUM_WORKER"));
   num_workers_ = atoi(val);
@@ -57,7 +60,7 @@ void Postoffice::Start(int customer_id, const char* argv0, const bool do_barrier
         node_ids_[g].push_back(id);
       }
     }
-
+    // 以上应该是描述哪些组包含哪些nodeid
     for (int g : {kScheduler, kScheduler + kServerGroup + kWorkerGroup,
                   kScheduler + kWorkerGroup, kScheduler + kServerGroup}) {
       node_ids_[g].push_back(kScheduler);
@@ -133,12 +136,14 @@ Customer* Postoffice::GetCustomer(int app_id, int customer_id, int timeout) cons
         break;
       }
     }
+    // todo 找不到customer就一直等，那什么时候放的呢？刚开始建立节点间通信的时候？？
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
   return obj;
 }
 
 void Postoffice::Barrier(int customer_id, int node_group) {
+  // 看看这个是个啥
   if (GetNodeIDs(node_group).size() <= 1) return;
   auto role = van_->my_node().role;
   if (role == Node::SCHEDULER) {

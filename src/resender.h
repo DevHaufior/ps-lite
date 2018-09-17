@@ -90,7 +90,7 @@ class Resender {
     Time send;
     int num_retry = 0;
   };
-  std::unordered_map<uint64_t, Entry> send_buff_;
+  std::unordered_map<uint64_t, Entry> send_buff_;// 暂存已经发送出去且没有收到ack确认的消息信息
 
   uint64_t GetKey(const Message& msg) {
     CHECK_NE(msg.meta.timestamp, Meta::kEmpty) << msg.DebugString();
@@ -130,7 +130,7 @@ class Resender {
     }
   }
   std::thread* monitor_;
-  std::unordered_set<uint64_t> acked_;
+  std::unordered_set<uint64_t> acked_; // 标志对接收到的消息已经发送过ack确认信息
   std::atomic<bool> exit_{false};
   std::mutex mu_;
   int timeout_;

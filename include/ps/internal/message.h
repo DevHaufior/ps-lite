@@ -59,6 +59,7 @@ DataType GetDataType() {
 }
 /**
  * \brief information about a node
+ * 节点信息
  */
 struct Node {
   /** \brief the empty value */

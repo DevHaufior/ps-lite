@@ -22,6 +22,9 @@ class Resender;
  *
  * If environment variable PS_RESEND is set to be 1, then van will resend a
  * message if it no ACK messsage is received within PS_RESEND_TIMEOUT millisecond
+ * 
+ * 
+ * 主要的网络通信发生的地方
  */
 class Van {
  public:
@@ -140,7 +143,9 @@ class Van {
     size_t recv_bytes_ = 0;
     int num_servers_ = 0;
     int num_workers_ = 0;
-    /** the thread for receiving messages */
+    /** the thread for receiving messages
+     * 
+     */
     std::unique_ptr<std::thread> receiver_thread_;
     /** the thread for sending heartbeat */
     std::unique_ptr<std::thread> heartbeat_thread_;

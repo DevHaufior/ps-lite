@@ -21,6 +21,9 @@ class Postoffice {
    */
   static Postoffice* Get() {
     static Postoffice e; return &e;
+    /**
+     * 留意这里单例的实现方式
+    */
   }
   /** \brief get the van */
   Van* van() { return van_; }
@@ -172,10 +175,12 @@ class Postoffice {
   std::unordered_map<int, std::unordered_map<int, Customer*>> customers_;
   std::unordered_map<int, std::vector<int>> node_ids_;
   std::mutex server_key_ranges_mu_;
-  std::vector<Range> server_key_ranges_;
+  std::vector<Range> server_key_ranges_; // 每个server node对应的[begin, end)
   bool is_worker_, is_server_, is_scheduler_;
   int num_servers_, num_workers_;
-  std::unordered_map<int, std::unordered_map<int, bool> > barrier_done_;
+  // appid ->(customer_id, true/false)，感觉上是scheduler用来同步各个worker/server的行为的
+  // 目前看，作用在scheduler/worker/server节点Start的最后一步，用于同步所有节点
+  std::unordered_map<int, std::unordered_map<int, bool> > barrier_done_; 
   int verbose_;
   std::mutex barrier_mu_;
   std::condition_variable barrier_cond_;

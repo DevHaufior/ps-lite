@@ -105,7 +105,7 @@ class Customer {
 
   std::mutex tracker_mu_;
   std::condition_variable tracker_cond_;
-  std::vector<std::pair<int, int>> tracker_;
+  std::vector<std::pair<int, int>> tracker_; // 从customer的角度看。一次pull对应发送到server node的个数<->接受到响应的个数
 
   DISALLOW_COPY_AND_ASSIGN(Customer);
 };

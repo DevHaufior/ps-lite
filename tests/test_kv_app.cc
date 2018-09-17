@@ -1,10 +1,12 @@
 #include "ps/ps.h"
+#include <cmath>
 using namespace ps;
 
 void StartServer() {
   if (!IsServer()) {
     return;
   }
+  std::cout<<"start server"<<std::endl;
   auto server = new KVServer<float>(0);
   server->set_request_handle(KVServerDefaultHandle<float>());
   RegisterExitCallback([server](){ delete server; });
@@ -15,6 +17,7 @@ void RunWorker() {
   KVWorker<float> kv(0, 0);
 
   // init
+  std::cout<<"start worker"<<std::endl;
   int num = 10000;
   std::vector<Key> keys(num);
   std::vector<float> vals(num);
@@ -31,7 +34,7 @@ void RunWorker() {
   std::vector<int> ts;
   for (int i = 0; i < repeat; ++i) {
     ts.push_back(kv.Push(keys, vals));
-
+    std::cout<<"i="<<i<<std::endl;
     // to avoid too frequency push, which leads huge memory usage
     if (i > 10) kv.Wait(ts[ts.size()-10]);
   }
@@ -43,8 +46,9 @@ void RunWorker() {
 
   float res = 0;
   for (int i = 0; i < num; ++i) {
-    res += fabs(rets[i] - vals[i] * repeat);
+    res += std::fabs(rets[i] - vals[i] * repeat);
   }
+
   CHECK_LT(res / repeat, 1e-5);
   LL << "error: " << res / repeat;
 }

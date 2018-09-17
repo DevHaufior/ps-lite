@@ -243,7 +243,7 @@ class ZMQVan : public Van {
   /**
    * \brief node_id to the socket for sending data to this node
    */
-  std::unordered_map<int, void*> senders_;
+  std::unordered_map<int, void*> senders_; // 对方node id to 当前节点发送数据用的socket
   std::mutex mu_;
   void *receiver_ = nullptr;
 };

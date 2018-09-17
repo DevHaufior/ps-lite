@@ -68,6 +68,9 @@
        T(T&&) = delete; \
        T& operator=(T const&) = delete; \
        T& operator=(T&&) = delete
+/**
+ * 利用define去定义代码块，而且还是泛型的，值的学习
+*/
 #  else
 #    define DISALLOW_COPY_AND_ASSIGN(T) \
        T(T const&); \

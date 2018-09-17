@@ -126,6 +126,11 @@ class SimpleApp {
 inline SimpleApp::SimpleApp(int app_id, int customer_id) : SimpleApp() {
   using namespace std::placeholders;
   obj_ = new Customer(app_id, customer_id, std::bind(&SimpleApp::Process, this, _1));
+                                          /**
+                                           * 注意这里bind的用法，virtual inline void Process(const Message& msg);
+                                           * 这个是它的定义，这里用bind时，其默认第一个参数是当前对象本身，所以用this，
+                                           * 但是按照定义其只有一个参数，所以占位符用的是_1，也是奇怪哈
+                                          */
 }
 
 inline int SimpleApp::Request(int req_head, const std::string& req_body, int recv_id) {

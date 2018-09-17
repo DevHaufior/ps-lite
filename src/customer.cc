@@ -58,7 +58,7 @@ void Customer::Receiving() {
     if (!recv.meta.request) {
       std::lock_guard<std::mutex> lk(tracker_mu_);
       tracker_[recv.meta.timestamp].second++;
-      tracker_cond_.notify_all();
+      tracker_cond_.notify_all(); // 推动worker向后执行
     }
   }
 }

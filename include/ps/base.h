@@ -16,7 +16,9 @@ using Key = uint64_t;
 #endif
 /*! \brief The maximal allowed key value */
 static const Key kMaxKey = std::numeric_limits<Key>::max();
-/** \brief node ID for the scheduler */
+/** \brief node ID for the scheduler 
+ * scheduler Node id
+*/
 static const int kScheduler = 1;
 /**
  * \brief the server node group ID
@@ -27,7 +29,9 @@ static const int kScheduler = 1;
  */
 static const int kServerGroup = 2;
 /** \brief the worker node group ID */
-static const int kWorkerGroup = 4;
-
+static const int kWorkerGroup = 4; 
+/**
+ 因为节点种类可划分到scheduler+servergroup+ workergroup,这种方式可以通过值直接确定组合
+*/
 }  // namespace ps
 #endif  // PS_BASE_H_

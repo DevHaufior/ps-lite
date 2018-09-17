@@ -4,9 +4,10 @@ endif
 
 include make/ps.mk
 
-ifndef CXX
+# ifndef CXX
+# CXX = g++
+# endif
 CXX = g++
-endif
 
 ifndef DEPS_PATH
 DEPS_PATH = $(shell pwd)/deps

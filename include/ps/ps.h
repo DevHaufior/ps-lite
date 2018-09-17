@@ -31,7 +31,7 @@ inline int MyRank() { return Postoffice::Get()->my_rank(); }
 /**
  * \brief start the system
  *
- * This function will block until every nodes are started.
+ * This function will [block until every nodes are started].
  * \param argv0 the program name, used for logging
  */
 inline void Start(int customer_id, const char* argv0 = nullptr) {

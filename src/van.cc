@@ -175,6 +175,7 @@ void Van::ProcessHearbeat(Message* msg) {
 void Van::ProcessBarrierCommand(Message* msg) {
   auto& ctrl = msg->meta.control;
   if (msg->meta.request) {
+    // scheduler 收集响应的属于group组的所有节点
     if (barrier_count_.empty()) {
       barrier_count_.resize(8, 0);
     }
@@ -184,11 +185,13 @@ void Van::ProcessBarrierCommand(Message* msg) {
     if (barrier_count_[group] ==
         static_cast<int>(Postoffice::Get()->GetNodeIDs(group).size())) {
       barrier_count_[group] = 0;
+      // scheduler收集全之后，置0
       Message res;
       res.meta.request = false;
       res.meta.app_id = msg->meta.app_id;
       res.meta.customer_id = msg->meta.customer_id;
       res.meta.control.cmd = Control::BARRIER;
+      //给属于group的所有节点分发继续进行的请求
       for (int r : Postoffice::Get()->GetNodeIDs(group)) {
         int recver_id = r;
         if (shared_node_mapping_.find(r) == shared_node_mapping_.end()) {
@@ -199,6 +202,7 @@ void Van::ProcessBarrierCommand(Message* msg) {
       }
     }
   } else {
+    // scheduler/worker/server收到scheduler发送的继续进行的请求
     Postoffice::Get()->Manage(*msg);
   }
 }
@@ -299,7 +303,8 @@ void Van::Start(int customer_id) {
     }
     // start receiver
     receiver_thread_ = std::unique_ptr<std::thread>(
-            new std::thread(&Van::Receiving, this));
+            new std::thread(&Van::Receiving, this)); 
+            // 注意这里thread的构造方法，这里的this是成员方法的参数，面向对象编程的一个特点
     init_stage++;
   }
   start_mu_.unlock();
@@ -329,11 +334,13 @@ void Van::Start(int customer_id) {
       if (Environment::Get()->find("PS_RESEND_TIMEOUT")) {
         timeout = atoi(Environment::Get()->find("PS_RESEND_TIMEOUT"));
       }
+      // 重发线程
       resender_ = new Resender(timeout, 10, this);
     }
 
     if (!is_scheduler_) {
       // start heartbeat thread
+      // 非scheduler点需要heartbeat thread
       heartbeat_thread_ = std::unique_ptr<std::thread>(
               new std::thread(&Van::Heartbeat, this));
     }
@@ -376,6 +383,7 @@ int Van::Send(const Message& msg) {
 }
 
 void Van::Receiving() {
+  // 接收到请求的线程
   Meta nodes;
   Meta recovery_nodes;  // store recovery nodes
   recovery_nodes.control.cmd = Control::ADD_NODE;
@@ -500,6 +508,7 @@ void Van::UnpackMeta(const char* meta_buf, int buf_size, Meta* meta) {
 }
 
 void Van::Heartbeat() {
+  // 心跳机制
   const char* val = Environment::Get()->find("PS_HEARTBEAT_INTERVAL");
   const int interval = val ? atoi(val) : kDefaultHeartbeatInterval;
   while (interval > 0 && ready_.load()) {

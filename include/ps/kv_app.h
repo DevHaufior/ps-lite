@@ -52,7 +52,7 @@ template<typename Val>
 class KVWorker : public SimpleApp {
  public:
   /** avoid too many this-> */
-  using SimpleApp::obj_;
+  using SimpleApp::obj_; /** 引入基类成员到派生类中，为using的一种使用方式*/
   /**
    * \brief callback function for \ref Push and \ref Pull
    *
@@ -96,17 +96,21 @@ class KVWorker : public SimpleApp {
    * \ref KVPairs for more information.
    *
    * The KV list is partitioned and sent based on the key range each server
-   * maintaining. This function returns without waiting the data are sent
+   * maintaining. 
+   * KV list基于每个server node维护的key range被划分和发送
+   * 
+   * 
+   * This function returns without waiting the data are sent
    * actually. Instead, use either \ref Wait or the callback to know when
    * finished. This function is thread-safe.
    *
-   * @param keys a list of keys, must be unique and sorted in increasing order
+   * @param keys a list of keys, must be unique and sorted in increasing order 排序好的
    * @param vals the according values
    * @param lens optional, lens[i] stores the value length of the \a
    * i-th KV pair
    * @param cmd an optional command sent to the servers
    * @param cb the callback which is called when the push is finished.
-   * @return the timestamp of this request
+   * @return the timestamp of this request 当前请求的timestamp
    */
   int Push(const std::vector<Key>& keys,
            const std::vector<Val>& vals,
@@ -262,7 +266,7 @@ class KVWorker : public SimpleApp {
   /** \brief data buffer for received kvs for each timestamp */
   std::unordered_map<int, std::vector<KVPairs<Val>>> recv_kvs_;
   /** \brief callbacks for each timestamp */
-  std::unordered_map<int, Callback> callbacks_;
+  std::unordered_map<int, Callback> callbacks_; // 每一个请求对应一个指定的call back函数
   /** \brief lock */
   std::mutex mu_;
   /** \brief kv list slicer */
@@ -354,7 +358,7 @@ struct KVServerDefaultHandle {
     }
     server->Response(req_meta, res);
   }
-  std::unordered_map<Key, Val> store;
+  std::unordered_map<Key, Val> store; // 存储Key-Value的值
 };
 
 
@@ -408,9 +412,9 @@ void KVServer<Val>::Response(const KVMeta& req, const KVPairs<Val>& res) {
 }
 
 template <typename Val>
-void KVWorker<Val>::DefaultSlicer(
-    const KVPairs<Val>& send, const std::vector<Range>& ranges,
-    typename KVWorker<Val>::SlicedKVs* sliced) {
+void KVWorker<Val>::DefaultSlicer(const KVPairs<Val>& send, const std::vector<Range>& ranges, typename KVWorker<Val>::SlicedKVs* sliced) {
+  // 根据server node的key range和具体发送的key list去切分key
+  // range [begin, end)
   sliced->resize(ranges.size());
 
   // find the positions in msg.key
@@ -466,6 +470,7 @@ void KVWorker<Val>::DefaultSlicer(
 
 template <typename Val>
 void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs) {
+  // Worker发送消息代码段
   // slice the message
   SlicedKVs sliced;
   slicer_(kvs, Postoffice::Get()->GetServerKeyRanges(), &sliced);
