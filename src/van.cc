@@ -40,12 +40,14 @@ void Van::ProcessAddNodeCommandAtScheduler(
   time_t t = time(NULL);
   size_t num_nodes = Postoffice::Get()->num_servers() + Postoffice::Get()->num_workers();
   if (nodes->control.node.size() == num_nodes) {
+    // 等待，无尽的等待，等到接收到所有的server和worker的AddNode请求
     // sort the nodes according their ip and port,
     std::sort(nodes->control.node.begin(), nodes->control.node.end(),
               [](const Node& a, const Node& b) {
                   return (a.hostname.compare(b.hostname) | (a.port < b.port)) > 0;
               });
     // assign node rank
+    // node id和rank同时存在的必要性
     for (auto& node : nodes->control.node) {
       std::string node_host_ip = node.hostname + ":" + std::to_string(node.port);
       if (connected_nodes_.find(node_host_ip) == connected_nodes_.end()) {
@@ -59,6 +61,7 @@ void Van::ProcessAddNodeCommandAtScheduler(
         Postoffice::Get()->UpdateHeartbeat(node.id, t);
         connected_nodes_[node_host_ip] = id;
       } else {
+        // todo 什么场景下适用
         int id = node.role == Node::SERVER ?
                  Postoffice::ServerRankToID(num_servers_) :
                  Postoffice::WorkerRankToID(num_workers_);
@@ -68,6 +71,7 @@ void Van::ProcessAddNodeCommandAtScheduler(
       if (node.role == Node::SERVER) num_servers_++;
       if (node.role == Node::WORKER) num_workers_++;
     }
+    // 收集到server 和worker node之后，scheduler把自己也加入到node中，发送给kWorkerGroup + kServerGroup
     nodes->control.node.push_back(my_node_);
     nodes->control.cmd = Control::ADD_NODE;
     Message back;
@@ -82,8 +86,10 @@ void Van::ProcessAddNodeCommandAtScheduler(
     }
     PS_VLOG(1) << "the scheduler is connected to "
                << num_workers_ << " workers and " << num_servers_ << " servers";
+    // 收集到server 和worker node之后，scheduler开始置ready_为true
     ready_ = true;
   } else if (!recovery_nodes->control.node.empty()) {
+    // todo 后面再看
     auto dead_nodes = Postoffice::Get()->GetDeadNodes(heartbeat_timeout_);
     std::unordered_set<int> dead_set(dead_nodes.begin(), dead_nodes.end());
     // send back the recovery node
@@ -109,6 +115,7 @@ void Van::ProcessAddNodeCommandAtScheduler(
 
 void Van::UpdateLocalID(Message* msg, std::unordered_set<int>* deadnodes_set,
                         Meta* nodes, Meta* recovery_nodes) {
+  // todo 暂时跳过
   auto& ctrl = msg->meta.control;
   int num_nodes = Postoffice::Get()->num_servers() + Postoffice::Get()->num_workers();
   // assign an id
@@ -116,6 +123,7 @@ void Van::UpdateLocalID(Message* msg, std::unordered_set<int>* deadnodes_set,
     CHECK(is_scheduler_);
     CHECK_EQ(ctrl.node.size(), 1);
     if (nodes->control.node.size() < num_nodes) {
+      // scheduler不停的收集server or worker发送过来的请求
       nodes->control.node.push_back(ctrl.node[0]);
     } else {
       // some node dies and restarts
@@ -185,7 +193,7 @@ void Van::ProcessBarrierCommand(Message* msg) {
     if (barrier_count_[group] ==
         static_cast<int>(Postoffice::Get()->GetNodeIDs(group).size())) {
       barrier_count_[group] = 0;
-      // scheduler收集全之后，置0
+      // scheduler收集全group对应的所有worker和server之后，置0
       Message res;
       res.meta.request = false;
       res.meta.app_id = msg->meta.app_id;
@@ -344,7 +352,7 @@ void Van::Start(int customer_id) {
       heartbeat_thread_ = std::unique_ptr<std::thread>(
               new std::thread(&Van::Heartbeat, this));
     }
-    init_stage++;
+    init_stage++; // todo 分阶段的目的？？
   }
   start_mu_.unlock();
 }
@@ -406,6 +414,7 @@ void Van::Receiving() {
       PS_VLOG(2) << msg.DebugString();
     }
     // duplicated message
+    // todo 重新发送消息的情况，后续再看
     if (resender_ && resender_->AddIncomming(msg)) continue;
 
     if (!msg.meta.control.empty()) {

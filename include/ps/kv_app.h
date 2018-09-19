@@ -556,6 +556,8 @@ int KVWorker<Val>::Pull_(
     const SArray<Key>& keys, C* vals, D* lens, int cmd, const Callback& cb) {
   int ts = obj_->NewRequest(kServerGroup);
   AddCallback(ts, [this, ts, keys, vals, lens, cb]() mutable {
+    // todo 拿到KVServer取回的数据之后，填充到vals, lens中，比较聪明的做法，不用一直传或者一直返回了，回调函数的典型
+    // 使用场景，值的学习
       mu_.lock();
       auto& kvs = recv_kvs_[ts];
       mu_.unlock();
